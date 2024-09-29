@@ -346,7 +346,7 @@ export default function HomePage() {
               size="icon"
               onClick={(e) => {
                 e.preventDefault();
-                handleRSVP(event.id);..
+                handleRSVP(event.id);
               }}
               disabled={rsvpedEvents.includes(event.id)}
               className={`transition-all p-2 duration-300 ${
