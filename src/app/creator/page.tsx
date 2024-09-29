@@ -1,15 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, Clock } from "lucide-react"; // Updated to import Lucide icons
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  Users,
+  Tag,
+  User,
+  Check,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import Header from "@/components/ui/header";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 type TagType =
   | "Sports"
@@ -30,12 +49,22 @@ export default function EventRallyCreator() {
     date: new Date(),
     time: "",
     tag: "" as TagType,
+    description: "",
     organizerName: "",
     organizerEmail: "",
     organizerPhone: "",
   });
+  const [completedSteps, setCompletedSteps] = useState([
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
@@ -64,19 +93,19 @@ export default function EventRallyCreator() {
         rsvpCount: 0,
         tag: formData.tag,
         isGlobal: false,
+        description: formData.description,
+        organizer: {
+          name: formData.organizerName,
+          email: formData.organizerEmail,
+          phone: formData.organizerPhone,
+        },
       };
 
-      // Retrieve existing events from local storage
       const existingEvents = localStorage.getItem("events");
       let events = existingEvents ? JSON.parse(existingEvents) : [];
-
-      // Add the new event to the events array
       events.push(newEvent);
-
-      // Save the updated events array back to local storage
       localStorage.setItem("events", JSON.stringify(events));
 
-      // Navigate to the home page
       router.push("/");
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -84,33 +113,94 @@ export default function EventRallyCreator() {
   };
 
   const handleNext = () => {
-    setCurrentTab((prevTab) => prevTab + 1);
+    if (isStepComplete(currentTab)) {
+      setCurrentTab((prevTab) => prevTab + 1);
+    }
   };
 
   const handlePrevious = () => {
     setCurrentTab((prevTab) => prevTab - 1);
   };
 
+  const isStepComplete = (step: number) => {
+    switch (step) {
+      case 0:
+        return (
+          formData.eventName.trim() !== "" && formData.description.trim() !== ""
+        );
+      case 1:
+        return formData.location.trim() !== "";
+      case 2:
+        return formData.time.trim() !== "";
+      case 3:
+        return formData.tag !== undefined;
+      case 4:
+        return (
+          formData.organizerName.trim() !== "" &&
+          formData.organizerEmail.trim() !== "" &&
+          formData.organizerPhone.trim() !== ""
+        );
+      default:
+        return false;
+    }
+  };
+
+  useEffect(() => {
+    const newCompletedSteps = completedSteps.map((_, index) =>
+      isStepComplete(index)
+    );
+    setCompletedSteps(newCompletedSteps);
+  }, [formData]);
+
   const tabs = [
     {
-      title: "Who are we floking to?",
+      title: "Event Details",
+      icon: <Users className="w-4 h-4" />,
       content: (
         <div className="space-y-4">
-          <Input
-            id="eventName"
-            name="eventName"
-            value={formData.eventName}
-            onChange={handleInputChange}
-            placeholder="Enter event name"
-          />
+          <div>
+            <Label htmlFor="eventName">Event Name</Label>
+            <Input
+              id="eventName"
+              name="eventName"
+              value={formData.eventName}
+              onChange={handleInputChange}
+              placeholder="Enter event name"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="description">Event Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Describe your event"
+              rows={4}
+              required
+            />
+          </div>
         </div>
       ),
     },
     {
-      title: "Where are we landing?",
+      title: "Location",
+      icon: <MapPin className="w-4 h-4" />,
       content: (
         <div className="space-y-4">
-          <div className="w-full h-[300px]">
+          <div>
+            <Label htmlFor="location">Event Location</Label>
+            <Input
+              id="location"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              placeholder="Enter event location"
+              required
+            />
+          </div>
+          <div className="w-full h-[300px] rounded-md overflow-hidden">
             <iframe
               src="https://storage.googleapis.com/maps-solutions-ht36ai95by/address-selection/lyev/address-selection.html"
               width="100%"
@@ -124,20 +214,27 @@ export default function EventRallyCreator() {
       ),
     },
     {
-      title: "When do we fly?",
+      title: "Date & Time",
+      icon: <CalendarIcon className="w-4 h-4" />,
       content: (
         <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <CalendarIcon className="text-gray-400" />
-            <span>{format(formData.date, "PPP")}</span>
+          <div>
+            <Label>Event Date</Label>
+            <Calendar
+              mode="single"
+              selected={formData.date}
+              onSelect={handleDateChange}
+              className="rounded-md border p-4 bg-white shadow-lg"
+              classNames={{
+                day_selected:
+                  "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_today: "bg-accent text-accent-foreground",
+                day: "hover:bg-muted",
+              }}
+            />
           </div>
-          <Calendar
-            mode="single"
-            selected={formData.date}
-            onSelect={handleDateChange}
-            className="rounded-md border"
-          />
-          <div className="space-y-2">
+          <div>
+            <Label htmlFor="time">Event Time</Label>
             <div className="relative">
               <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
@@ -147,6 +244,7 @@ export default function EventRallyCreator() {
                 value={formData.time}
                 onChange={handleInputChange}
                 className="pl-10"
+                required
               />
             </div>
           </div>
@@ -154,42 +252,40 @@ export default function EventRallyCreator() {
       ),
     },
     {
-      title: "Add a Tag",
+      title: "Category",
+      icon: <Tag className="w-4 h-4" />,
       content: (
         <div className="space-y-4">
-          <RadioGroup value={formData.tag} onValueChange={handleTagChange}>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="sports" id="sports" />
-              <Label htmlFor="sports">Sports</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="political" id="political" />
-              <Label htmlFor="political">Political</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="concerts" id="concerts" />
-              <Label htmlFor="concerts">Concerts</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="protests" id="protests" />
-              <Label htmlFor="protests">Protests</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="charity" id="charity" />
-              <Label htmlFor="charity">Charity</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="tech" id="tech" />
-              <Label htmlFor="tech">Technology</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="edu" id="edu" />
-              <Label htmlFor="edu">Education</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="custom" id="custom" />
-              <Label htmlFor="custom">Other</Label>
-            </div>
+          <Label>Event Category</Label>
+          <RadioGroup
+            value={formData.tag}
+            onValueChange={handleTagChange}
+            className="grid grid-cols-2 gap-4"
+          >
+            {[
+              "Sports",
+              "Politics",
+              "Concerts",
+              "Protests",
+              "Charity",
+              "Technology",
+              "Education",
+              "Other",
+            ].map((tag) => (
+              <div key={tag} className="flex items-center space-x-2">
+                <RadioGroupItem
+                  value={tag}
+                  id={tag.toLowerCase()}
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor={tag.toLowerCase()}
+                  className="flex flex-1 items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                >
+                  {tag}
+                </Label>
+              </div>
+            ))}
           </RadioGroup>
           {formData.tag === "Other" && (
             <div className="mt-2">
@@ -207,12 +303,11 @@ export default function EventRallyCreator() {
       ),
     },
     {
-      title: "Who's leading the flok?",
+      title: "Organizer",
+      icon: <User className="w-4 h-4" />,
       content: (
-        <div className="space-y-2">
-          {" "}
-          {/* Adjusted spacing for better visual separation */}
-          <div className="border-b border-transparent  pb-1">
+        <div className="space-y-4">
+          <div>
             <Label htmlFor="organizerName">Organization Name</Label>
             <Input
               id="organizerName"
@@ -220,10 +315,11 @@ export default function EventRallyCreator() {
               value={formData.organizerName}
               onChange={handleInputChange}
               placeholder="Enter organizer name"
+              required
             />
           </div>
-          <div className="border-b border-transparent pb-1">
-            <Label className="emailLabel">Email</Label>
+          <div>
+            <Label htmlFor="organizerEmail">Email</Label>
             <Input
               id="organizerEmail"
               name="organizerEmail"
@@ -231,10 +327,11 @@ export default function EventRallyCreator() {
               value={formData.organizerEmail}
               onChange={handleInputChange}
               placeholder="Enter organizer email"
+              required
             />
           </div>
-          <div className="border-b border-transparent pb-1">
-            <Label className="phoneLabel">Phone #</Label>
+          <div>
+            <Label htmlFor="organizerPhone">Phone Number</Label>
             <Input
               id="organizerPhone"
               name="organizerPhone"
@@ -242,6 +339,7 @@ export default function EventRallyCreator() {
               value={formData.organizerPhone}
               onChange={handleInputChange}
               placeholder="Enter organizer phone"
+              required
             />
           </div>
         </div>
@@ -250,34 +348,85 @@ export default function EventRallyCreator() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-center mt-4 mb-8">
-          Create Your Flok Rally
-        </h1>
-        <div className="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-2xl font-semibold mb-4">
-            {tabs[currentTab].title}
-          </h2>
-          {tabs[currentTab].content}
-          <div className="mt-6 flex justify-between">
-            {currentTab > 0 && (
-              <Button onClick={handlePrevious} variant="outline">
-                Previous
-              </Button>
-            )}
-            {currentTab < tabs.length - 1 ? (
-              <Button onClick={handleNext} className="ml-auto">
-                Next
-              </Button>
-            ) : (
-              <Button onClick={handleSubmit} className="ml-auto">
-                Spread your wings
-              </Button>
-            )}
-          </div>
-        </div>
+        <Card className="max-w-6xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold text-center">
+              Create Your Flok Rally
+            </CardTitle>
+            <CardDescription className="text-center">
+              Spread your wings and gather your flock
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs
+              value={currentTab.toString()}
+              onValueChange={(value: string) => setCurrentTab(parseInt(value))}
+            >
+              <TabsList className="grid w-full grid-cols-5">
+                {tabs.map((tab, index) => (
+                  <TabsTrigger
+                    key={index}
+                    value={index.toString()}
+                    disabled={index > currentTab}
+                    className="relative"
+                  >
+                    {completedSteps[index] ? (
+                      <Check className="w-4 h-4 text-green-500 absolute top-1 right-1" />
+                    ) : null}
+                    {tab.icon}
+                    <span className="hidden md:inline ml-2">{tab.title}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {tabs.map((tab, index) => (
+                <TabsContent key={index} value={index.toString()}>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{tab.title}</CardTitle>
+                      <CardDescription>
+                        Step {index + 1} of {tabs.length}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>{tab.content}</CardContent>
+                    <CardFooter className="flex justify-between">
+                      {index > 0 && (
+                        <Button onClick={handlePrevious} variant="outline">
+                          Previous
+                        </Button>
+                      )}
+                      {index < tabs.length - 1 ? (
+                        <Button
+                          onClick={handleNext}
+                          className="ml-auto"
+                          disabled={!isStepComplete(index)}
+                        >
+                          Next
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleSubmit}
+                          className="ml-auto"
+                          disabled={!isStepComplete(index)}
+                        >
+                          Fly Away
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </CardContent>
+          <CardFooter>
+            <Progress
+              value={((currentTab + 1) / tabs.length) * 100}
+              className="w-full"
+            />
+          </CardFooter>
+        </Card>
       </main>
       <footer className="bg-gray-100 py-8">
         <div className="container mx-auto px-4">
