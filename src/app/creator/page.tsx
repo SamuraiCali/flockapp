@@ -1,26 +1,35 @@
 "use client";
 
-"use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar as CalendarIcon, Clock } from "lucide-react"; // Updated to import Lucide icons
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarIcon, Clock } from "lucide-react"; // Updated to import Lucide icons
 import { format } from "date-fns";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Header from "@/components/ui/header";
 
+type TagType =
+  | "Sports"
+  | "Politics"
+  | "Concerts"
+  | "Protests"
+  | "Charity"
+  | "Technology"
+  | "Education"
+  | "Other";
+
 export default function EventRallyCreator() {
+  const router = useRouter();
   const [currentTab, setCurrentTab] = useState(0);
   const [formData, setFormData] = useState({
     eventName: "",
     location: "",
     date: new Date(),
     time: "",
-    tag: "",
-    customTag: "",
+    tag: "" as TagType,
     organizerName: "",
     organizerEmail: "",
     organizerPhone: "",
@@ -37,30 +46,38 @@ export default function EventRallyCreator() {
     }
   };
 
-  const handleTagChange = (value: string) => {
+  const handleTagChange = (value: TagType) => {
     setFormData((prevData) => ({
       ...prevData,
       tag: value,
-      customTag: value === "custom" ? prevData.customTag : "",
     }));
   };
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("/api/create-event", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const newEvent = {
+        id: Date.now(),
+        title: formData.eventName,
+        date: format(formData.date, "yyyy-MM-dd"),
+        time: formData.time,
+        location: formData.location,
+        rsvpCount: 0,
+        tag: formData.tag,
+        isGlobal: false,
+      };
 
-      if (response.ok) {
-        console.log("Event created successfully");
-        // Handle success, redirect or show a message
-      } else {
-        console.error("Error creating event");
-      }
+      // Retrieve existing events from local storage
+      const existingEvents = localStorage.getItem("events");
+      let events = existingEvents ? JSON.parse(existingEvents) : [];
+
+      // Add the new event to the events array
+      events.push(newEvent);
+
+      // Save the updated events array back to local storage
+      localStorage.setItem("events", JSON.stringify(events));
+
+      // Navigate to the home page
+      router.push("/");
     } catch (error) {
       console.error("Error submitting form:", error);
     }
@@ -114,6 +131,12 @@ export default function EventRallyCreator() {
             <CalendarIcon className="text-gray-400" />
             <span>{format(formData.date, "PPP")}</span>
           </div>
+          <Calendar
+            mode="single"
+            selected={formData.date}
+            onSelect={handleDateChange}
+            className="rounded-md border"
+          />
           <div className="space-y-2">
             <div className="relative">
               <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -168,13 +191,13 @@ export default function EventRallyCreator() {
               <Label htmlFor="custom">Other</Label>
             </div>
           </RadioGroup>
-          {formData.tag === "custom" && (
+          {formData.tag === "Other" && (
             <div className="mt-2">
               <Label htmlFor="customTag">Custom Tag</Label>
               <Input
                 id="customTag"
                 name="customTag"
-                value={formData.customTag}
+                value={formData.tag}
                 onChange={handleInputChange}
                 placeholder="Enter custom tag"
               />
@@ -256,7 +279,6 @@ export default function EventRallyCreator() {
           </div>
         </div>
       </main>
-
       <footer className="bg-gray-100 py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">

@@ -25,6 +25,9 @@ const Header: React.FC = () => {
               Create New Event
             </Button>
           </Link>
+          <a href="/api/auth/login" className="text-sm">
+            Login
+          </a>
         </nav>
       </div>
     </header>
