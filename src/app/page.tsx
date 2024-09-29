@@ -125,7 +125,7 @@ export default function HomePage() {
         rsvpCount: 1500,
         tag: "Technology",
         isGlobal: false,
-        image: "/placeholder.svg?height=200&width=400",
+        image: "/balls.png",
       },
       {
         id: 2,
@@ -136,7 +136,7 @@ export default function HomePage() {
         rsvpCount: 5000,
         tag: "Concerts",
         isGlobal: false,
-        image: "/placeholder.svg?height=200&width=400",
+        image: "/rave.png",
       },
       {
         id: 3,
@@ -147,7 +147,7 @@ export default function HomePage() {
         rsvpCount: 200,
         tag: "Politics",
         isGlobal: false,
-        image: "/placeholder.svg?height=200&width=400",
+        image: "/wh.png",
       },
       {
         id: 4,
@@ -158,7 +158,7 @@ export default function HomePage() {
         rsvpCount: 1000,
         tag: "Charity",
         isGlobal: false,
-        image: "/placeholder.svg?height=200&width=400",
+        image: "/hands.png",
       },
       {
         id: 5,
@@ -169,7 +169,7 @@ export default function HomePage() {
         rsvpCount: 3000,
         tag: "Protests",
         isGlobal: false,
-        image: "/placeholder.svg?height=200&width=400",
+        image: "/fists.png",
       },
       {
         id: 6,
@@ -180,7 +180,7 @@ export default function HomePage() {
         rsvpCount: 5000,
         tag: "Sports",
         isGlobal: false,
-        image: "/placeholder.svg?height=200&width=400",
+        image: "/balls.png",
       },
       {
         id: 7,
@@ -191,7 +191,7 @@ export default function HomePage() {
         rsvpCount: 100000,
         tag: "Education",
         isGlobal: true,
-        image: "/placeholder.svg?height=200&width=400",
+        image: "/wh.png",
       },
       {
         id: 8,
@@ -202,7 +202,7 @@ export default function HomePage() {
         rsvpCount: 500000,
         tag: "Other",
         isGlobal: true,
-        image: "/placeholder.svg?height=200&width=400",
+        image: "/wh.png",
       },
     ];
     const allEvents = [...mockEvents, ...parsedEvents];
@@ -293,7 +293,7 @@ export default function HomePage() {
           <Link href={`/eventDetails`} className="flex-grow">
             <div className="relative h-48 overflow-hidden">
               <Image
-                src={event.image || "/placeholder.svg?height=200&width=400"}
+                src={event.image || "/placeholder.svg"}
                 alt={event.title}
                 layout="fill"
                 objectFit="cover"
@@ -343,13 +343,13 @@ export default function HomePage() {
               </span>
             </div>
             <Button
-              size="sm"
+              size="icon"
               onClick={(e) => {
                 e.preventDefault();
                 handleRSVP(event.id);
               }}
               disabled={rsvpedEvents.includes(event.id)}
-              className={`transition-all duration-300 ${
+              className={`transition-all p-2 duration-300 ${
                 rsvpedEvents.includes(event.id)
                   ? "bg-green-500 text-white hover:bg-green-600"
                   : "bg-primary text-primary-foreground hover:bg-primary/90"
@@ -361,7 +361,7 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <ThumbsUp className="mr-8 h-8 w-8" />
+                  <ThumbsUp className="size-4" />
                 </>
               )}
             </Button>

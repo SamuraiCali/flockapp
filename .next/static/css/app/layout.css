@@ -684,6 +684,10 @@ video {
 .hidden {
   display: none;
 }
+.size-4 {
+  width: 1rem;
+  height: 1rem;
+}
 .h-4 {
   height: 1rem;
 }
@@ -1026,6 +1030,9 @@ video {
 }
 .p-0 {
   padding: 0px;
+}
+.p-2 {
+  padding: 0.5rem;
 }
 .px-4 {
   padding-left: 1rem;
